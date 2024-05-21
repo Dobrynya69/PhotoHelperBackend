@@ -5,12 +5,13 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 
 from users.models import CustomUser
-from users.serializers import UserSerializer, UserLoginSerializer
+from users.serializers import UserSerializer, UserLoginSerializer, UserUpdateSerializer
 
 class UserService():
     model_class = CustomUser
     serializer_class = UserSerializer
     login_serializer_class = UserLoginSerializer
+    update_serializer_class = UserUpdateSerializer
 
 
     def __init__(self, request) -> None:
@@ -24,20 +25,27 @@ class UserService():
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         user_serialized = self.serializer_class(instance=user)
-        return Response(
-            data=user_serialized.data,
-            status=status.HTTP_200_OK)
+        return Response(data=user_serialized.data, status=status.HTTP_200_OK)
 
 
     def register(self):
-        user_serialized = self.serializer_class(data=self.request.data)
+        user_serialized = self.serializer_class(data=self.request.data, files=self.request.FILES)
         if user_serialized.is_valid():
             user = user_serialized.create(user_serialized.validated_data)
             token, _ = Token.objects.get_or_create(user=user)
-            return Response(
-                data={"token": token.key},
-                status=status.HTTP_201_CREATED
-            )
+            return Response(data={"token": token.key}, status=status.HTTP_201_CREATED)
+
+        return Response(
+            data=user_serialized.errors,
+            status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+
+
+    def update(self):
+        user_update_serialized = self.update_serializer_class(data=self.request.data, files=self.request.FILES)
+        if user_update_serialized.is_valid():
+            user = user_update_serialized.update(self.request.user, user_update_serialized.validated_data)
+            user_serialized = self.serializer_class(instance=user)
+            return Response(data=user_serialized.data, status=status.HTTP_200_OK)
 
         return Response(
             data=user_serialized.errors,
@@ -50,10 +58,7 @@ class UserService():
             user = authenticate(username=login_serialized.data.get('username'),
                                 password=login_serialized.data.get('password'))
             token, _ = Token.objects.get_or_create(user=user)
-            return Response(
-                data={"token": token.key},
-                status=status.HTTP_200_OK
-            )
+            return Response(data={"token": token.key}, status=status.HTTP_200_OK)
 
         return Response(
             data=login_serialized.errors,

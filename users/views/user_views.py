@@ -21,6 +21,12 @@ class UserViewSet(ModelViewSet):
         return service.register()
 
     @action(detail=True, methods=['post'])
+    @permission_classes([IsAuthenticated])
+    def update(self, request):
+        service = UserService(request)
+        return service.update()
+    
+    @action(detail=True, methods=['post'])
     def login(self, request):
         service = UserService(request)
         return service.login()
