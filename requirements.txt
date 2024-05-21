@@ -6,3 +6,4 @@ pillow
 django-cleanup
 django-rest-swagger
 drf-yasg
+django-cors-headers

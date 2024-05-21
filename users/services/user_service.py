@@ -21,9 +21,7 @@ class UserService():
         try:
             user = self.model_class.objects.get(pk=pk)
         except self.model_class.DoesNotExist:
-            return Response(
-                data={'errors':{'Does not exists': 'User with such username does not exists'}},
-                status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         user_serialized = self.serializer_class(instance=user)
         return Response(
@@ -37,7 +35,7 @@ class UserService():
             user = user_serialized.create(user_serialized.validated_data)
             token, _ = Token.objects.get_or_create(user=user)
             return Response(
-                data={"user_pk": user.pk, "user_token": token.key},
+                data={"token": token.key},
                 status=status.HTTP_201_CREATED
             )
 
@@ -53,7 +51,7 @@ class UserService():
                                 password=login_serialized.data.get('password'))
             token, _ = Token.objects.get_or_create(user=user)
             return Response(
-                data={"user_pk": user.pk, "user_token": token.key},
+                data={"token": token.key},
                 status=status.HTTP_200_OK
             )
 
@@ -67,9 +65,7 @@ class UserService():
         try:
             token = Token.objects.get(user=user)
         except Token.DoesNotExist:
-            return Response(
-                data={'errors':{'Does not exists': 'Token does not exists'}},
-                status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_200_OK)
 
         token.delete()
         return Response(status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
