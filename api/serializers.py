@@ -1,30 +1,56 @@
 from rest_framework import serializers
 
-from api.models import UserImage
-from api.utils.user_image_utils import UserImageUtils
+from api.models import UserImage, UserImageGroup
+
 
 class UserImageSerializer(serializers.ModelSerializer):    
     class Meta:
         model = UserImage
         fields = '__all__'
-        read_only_fields = ('id', 'user', 'is_borderized', 'original_image', 'contrast_value', 'brightness_value')
-        
-    def create(self, validated_data, user):
+        read_only_fields = ('id', 'group', 'user', 'original_image')
+
+    def create(self, validated_data, group, user):
+        validated_data['group'] = group
         validated_data['user'] = user
         validated_data['original_image'] = validated_data['image']
-        user_image = super().create(validated_data)
-        return user_image
+        return super().create(validated_data)
+    
+    def create_without_group(self, validated_data, user):
+        validated_data['user'] = user
+        validated_data['original_image'] = validated_data['image']
+        return super().create(validated_data)
 
-class UserImageUpdateSerializer(serializers.ModelSerializer):    
+
+class UserImageUpdateSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+    title = serializers.CharField(max_length=255, required=False)
+    description = serializers.CharField(required=False)
+    
     class Meta:
         model = UserImage
-        fields = '__all__'
-        read_only_fields = ('id', 'user', 'image', 'original_image')
-        
-    def update(self, instance, validated_data):
-        user_image = super().update(instance, validated_data)
-        user_image_utils = UserImageUtils(user_image, user_image.image.name.split("/")[-1])
-        user_image_utils.update_user_image()
-        return user_image
+        fields = ('image', 'title', 'description')
 
-        
+    def update(self, validated_data):
+        for field, value in validated_data.items():
+            setattr(self.instance, field, value)
+
+        self.instance.save()
+        return self.instance
+
+
+class UserImageGroupSerializer(serializers.ModelSerializer):    
+    class Meta:
+        model = UserImageGroup
+        fields = '__all__'
+        read_only_fields = ('id', 'user')
+
+    def create(self, validated_data, user):
+        validated_data['user'] = user
+        return super().create(validated_data)
+
+
+    def update(self, validated_data):
+        for field, value in validated_data.items():
+            setattr(self.instance, field, value)
+
+        return self.instance.save()

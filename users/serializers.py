@@ -4,12 +4,15 @@ from rest_framework import serializers
 
 from users.models import CustomUser
 
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
+    avatar = serializers.ImageField(allow_null=True, required=False)
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'first_name', 'last_name', 'avatar', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'avatar', 'password']
+        read_only_fields = ['id']
 
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data.get('password'))
@@ -21,12 +24,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['first_name', 'last_name', 'avatar']
 
-    def update(self, instance, validated_date):
-        instance.first_name = validated_date.get("first_name")
-        instance.last_name = validated_date.get("last_name")
-        instance.avatar = validated_date.get("avatar")
-        instance.save()
-        return instance
+    def update(self, validated_data):
+        for field, value in validated_data.items():
+            setattr(self.instance, field, value)
+
+        self.instance.save()
+        return self.instance
 
 
 class UserLoginSerializer(serializers.Serializer):

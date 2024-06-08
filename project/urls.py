@@ -5,14 +5,12 @@ from django.conf import settings
 
 from rest_framework import permissions
 
-from rest_framework_swagger.views import get_swagger_view
-
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Photo editor",
+        title='Photo editor',
         default_version='v0.1',),
     public=True,
     permission_classes=(permissions.AllowAny,),
